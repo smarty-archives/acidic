@@ -3,12 +3,14 @@ package kvacid
 import "time"
 
 type Index struct {
+	// add writers here, e.g. CommitWriter, ApplyWriter, IndexWriter, etc.
 	head       uint64
 	tail       uint64
 	opened     map[string]*OpenTransaction
 	closed     map[string]*CommittedItem // map[canonical key]item (across all committed transactions)
 	incomplete map[uint64]uint64         // number of items remaining to be completed for each commit sequence
 	completed  map[string]*CompletedItem
+	history    map[string]struct{} // list of N recent transactions so that Commit() can return success on each call.
 }
 
 type OpenTransaction struct {
@@ -44,4 +46,13 @@ type CompletedItem struct {
 func (this *Index) Apply(commit interface{}) {
 	// absorb the state of the commit and overwrite any committed or pending state
 	// and/or invalidate any conflicting uncommitted state
+}
+
+type CommitWriter interface {
+}
+
+type ApplyWriter interface {
+}
+
+type IndexWriter interface {
 }
