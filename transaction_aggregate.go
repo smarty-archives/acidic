@@ -10,66 +10,79 @@ func NewTransactionAggregate(messages MessageContainer) *TransactionAggregate {
 	}
 }
 
-func (this *TransactionAggregate) Handle(message interface{}) {
+func (this *TransactionAggregate) Handle(message interface{}) error {
 	switch message := message.(type) {
 
 	case StoreItemCommand:
-		this.handleStoreItem(message)
+		return this.handleStoreItem(message)
 	case ItemStoredEvent:
-		this.handleItemStored(message)
+		return this.handleItemStored(message)
 	case ItemStoreFailedEvent:
-		this.handleItemStoreFailed(message)
+		return this.handleItemStoreFailed(message)
 
 	case DeleteItemCommand:
-		this.handleDeleteItem(message)
+		return this.handleDeleteItem(message)
 	case ItemDeletedEvent:
-		this.handleItemDeleted(message)
+		return this.handleItemDeleted(message)
 	case ItemDeleteFailedEvent:
-		this.handleItemDeleteFailed(message)
+		return this.handleItemDeleteFailed(message)
 
 	case CommitTransactionCommand:
-		this.handleCommitTransaction(message)
+		return this.handleCommitTransaction(message)
 	case TransactionCommittedEvent:
-		this.handleTransactionCommitted(message)
+		return this.handleTransactionCommitted(message)
 
 	case TransactionFailedEvent:
-		this.handleTransactionFailed(message)
+		return this.handleTransactionFailed(message)
 
 	case AbortTransactionCommand:
-		this.handleAbortTransaction(message)
+		return this.handleAbortTransaction(message)
+
+	default:
+		return nil
 	}
 }
 
-func (this *TransactionAggregate) handleStoreItem(message StoreItemCommand) {
+func (this *TransactionAggregate) handleStoreItem(message StoreItemCommand) error {
+	return nil
 }
-func (this *TransactionAggregate) handleItemStored(message ItemStoredEvent) {
+func (this *TransactionAggregate) handleItemStored(message ItemStoredEvent) error {
+	return nil
 }
-func (this *TransactionAggregate) handleItemStoreFailed(message ItemStoreFailedEvent) {
-}
-
-func (this *TransactionAggregate) handleDeleteItem(message DeleteItemCommand) {
-}
-func (this *TransactionAggregate) handleItemDeleted(message ItemDeletedEvent) {
-}
-func (this *TransactionAggregate) handleItemDeleteFailed(message ItemDeleteFailedEvent) {
+func (this *TransactionAggregate) handleItemStoreFailed(message ItemStoreFailedEvent) error {
+	return nil
 }
 
-func (this *TransactionAggregate) handleCommitTransaction(message CommitTransactionCommand) {
+func (this *TransactionAggregate) handleDeleteItem(message DeleteItemCommand) error {
+	return nil
 }
-func (this *TransactionAggregate) handleTransactionCommitted(message TransactionCommittedEvent) {
+func (this *TransactionAggregate) handleItemDeleted(message ItemDeletedEvent) error {
+	return nil
+}
+func (this *TransactionAggregate) handleItemDeleteFailed(message ItemDeleteFailedEvent) error {
+	return nil
 }
 
-func (this *TransactionAggregate) handleTransactionFailed(message TransactionFailedEvent) {
+func (this *TransactionAggregate) handleCommitTransaction(message CommitTransactionCommand) error {
+	return nil
+}
+func (this *TransactionAggregate) handleTransactionCommitted(message TransactionCommittedEvent) error {
+	return nil
 }
 
-func (this *TransactionAggregate) handleAbortTransaction(message AbortTransactionCommand) {
+func (this *TransactionAggregate) handleTransactionFailed(message TransactionFailedEvent) error {
+	return nil
+}
+
+func (this *TransactionAggregate) handleAbortTransaction(message AbortTransactionCommand) error {
+	return nil
 }
 
 func (this *TransactionAggregate) raise(message interface{}) {
 	this.messages.Add(message)
-	this.Apply(message)
+	this.InternalApply(message)
 }
-func (this *TransactionAggregate) Apply(message interface{}) {
+func (this *TransactionAggregate) InternalApply(message interface{}) {
 	switch message := message.(type) {
 
 	case TransactionStartedEvent:
