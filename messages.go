@@ -94,6 +94,7 @@ type TransactionCommittingEvent struct {
 }
 type TransactionCommittedEvent struct {
 	Timestamp     time.Time
+	Commit        uint64
 	TransactionID string
 }
 
@@ -114,6 +115,16 @@ type TransactionAbortedEvent struct {
 type TransactionAbortFailedEvent struct {
 	Timestamp     time.Time
 	TransactionID string
+}
+
+type ItemMergedEvent struct {
+	Timestamp     time.Time
+	Commit        uint64
+	Sequence      uint64
+	TransactionID string
+	Key           string
+	Revision      string
+	ETag          string
 }
 
 type MessageContainer interface {
