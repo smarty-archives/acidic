@@ -1,12 +1,18 @@
 package acidic
 
+import "time"
+
 type TransactionAggregate struct {
 	raised MessageContainer
+	open   map[string]*Transaction
+	ttl    time.Duration
 }
 
 func NewTransactionAggregate(raised MessageContainer) *TransactionAggregate {
 	return &TransactionAggregate{
 		raised: raised,
+		open:   make(map[string]*Transaction),
+		ttl:    time.Minute * 5,
 	}
 }
 
@@ -44,7 +50,22 @@ func (this *TransactionAggregate) Handle(message interface{}) error {
 }
 
 func (this *TransactionAggregate) handleStoreItem(message StoreItemCommand) error {
+	message.TransactionID = this.startTransaction(message.TransactionID)
+
 	return nil
+}
+func (this *TransactionAggregate) startTransaction(transactionID string) string {
+	if len(transactionID) > 0 {
+		return transactionID
+	}
+
+	this.raise(TransactionStartedEvent{
+		Timestamp:     time.Now().UTC(), // TODO: use testable value (but real in production)
+		TransactionID: transactionID,    // TODO: use testable value (but random in production)
+		TTL:           this.ttl,
+	})
+
+	return transactionID
 }
 func (this *TransactionAggregate) handleItemStored(message ItemStoredEvent) error {
 	return nil
@@ -123,6 +144,7 @@ func (this *TransactionAggregate) apply(message interface{}) {
 }
 
 func (this *TransactionAggregate) applyTransactionStarted(message TransactionStartedEvent) {
+	this.open[message.TransactionID] = NewTransaction(this.raised, message.Timestamp, message.TTL)
 }
 
 func (this *TransactionAggregate) applyStoringItem(message StoringItemEvent) {

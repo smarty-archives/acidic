@@ -32,8 +32,7 @@ type StoreItemCommand struct {
 type TransactionStartedEvent struct {
 	Timestamp     time.Time
 	TransactionID string
-	Started       time.Time
-	Expiration    time.Time
+	TTL           time.Duration
 }
 type StoringItemEvent struct {
 	Sequence      uint64 // incremented for each mutating operation; this helps us to know which Store was the most recent one
