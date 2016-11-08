@@ -7,6 +7,11 @@ func NewKeyMapProjection() *KeyMapProjection {
 	return &KeyMapProjection{}
 }
 
+func (this *KeyMapProjection) Replay(message interface{}) {
+	// for this project, we won't be event sourcing, but this is here to indicate a minor breakthrough in how events
+	// both internal and external--are processed.
+	this.Apply(message)
+}
 func (this *KeyMapProjection) Apply(message interface{}) {
 	switch message := message.(type) {
 
