@@ -116,10 +116,6 @@ type TransactionAbortedEvent struct {
 	Timestamp     time.Time
 	TransactionID string
 }
-type TransactionAbortFailedEvent struct {
-	Timestamp     time.Time
-	TransactionID string
-}
 
 type ItemMergedEvent struct {
 	Timestamp     time.Time
@@ -135,6 +131,6 @@ type MessageContainer interface {
 	Add(interface{})
 }
 
-type Raiser interface {
+type Publisher interface {
 	Raise(interface{})
 }

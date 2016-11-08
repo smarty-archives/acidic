@@ -37,8 +37,6 @@ func (this *KeyMapProjection) Apply(message interface{}) {
 
 	case TransactionAbortedEvent:
 		this.applyTransactionAborted(message)
-	case TransactionAbortFailedEvent:
-		this.applyTransactionAbortFailed(message)
 
 	case ItemMergedEvent:
 		this.applyItemMerged(message)
@@ -71,8 +69,6 @@ func (this *KeyMapProjection) applyTransactionFailed(message TransactionFailedEv
 }
 
 func (this *KeyMapProjection) applyTransactionAborted(message TransactionAbortedEvent) {
-}
-func (this *KeyMapProjection) applyTransactionAbortFailed(message TransactionAbortFailedEvent) {
 }
 
 func (this *KeyMapProjection) applyItemMerged(message ItemMergedEvent) {

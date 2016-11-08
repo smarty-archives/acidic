@@ -3,24 +3,98 @@ package acidic
 import "time"
 
 type Transaction struct {
-	raised   Raiser
-	sequence uint64
-	started  time.Time
-	updated  time.Time
-	ttl      time.Duration
+	publisher Publisher
+	status    uint64
+	operation uint64
+	started   time.Time
+	updated   time.Time
+	ttl       time.Duration
 }
 
-func NewTransaction(raised Raiser, started time.Time, ttl time.Duration) *Transaction {
+func NewTransaction(publisher Publisher, started time.Time, ttl time.Duration) *Transaction {
 	return &Transaction{
-		raised:   raised,
-		sequence: 0,
-		started:  started,
-		updated:  started,
-		ttl:      ttl,
+		publisher: publisher,
+		operation: 0,
+		started:   started,
+		updated:   started,
+		ttl:       ttl,
 	}
 }
 
 func (this *Transaction) Handle(message interface{}) error {
+	// TODO: if timed out, return TimeoutError and raise TransactionFailedEvent
+
+	switch message := message.(type) {
+
+	case StoreItemCommand:
+		return this.handleStoreItem(message)
+	case ItemStoredEvent:
+		return this.handleItemStored(message)
+	case ItemStoreFailedEvent:
+		return this.handleItemStoreFailed(message)
+
+	case DeleteItemCommand:
+		return this.handleDeleteItem(message)
+	case ItemDeletedEvent:
+		return this.handleItemDeleted(message)
+	case ItemDeleteFailedEvent:
+		return this.handleItemDeleteFailed(message)
+
+	case CommitTransactionCommand:
+		return this.handleCommitTransaction(message)
+	case TransactionCommittedEvent:
+		return this.handleTransactionCommitted(message)
+	case TransactionCommitFailedEvent:
+		return this.handleTransactionCommitFailed(message)
+
+	case AbortTransactionCommand:
+		return this.handleAbortTransaction(message)
+
+	default:
+		return nil
+	}
+}
+
+func (this *Transaction) handleStoreItem(message StoreItemCommand) error {
+	return nil
+}
+func (this *Transaction) handleItemStored(message ItemStoredEvent) error {
+	return nil
+}
+func (this *Transaction) handleItemStoreFailed(message ItemStoreFailedEvent) error {
+	return nil
+}
+
+func (this *Transaction) handleDeleteItem(message DeleteItemCommand) error {
+	return nil
+}
+func (this *Transaction) handleItemDeleted(message ItemDeletedEvent) error {
+	return nil
+}
+func (this *Transaction) handleItemDeleteFailed(message ItemDeleteFailedEvent) error {
+	return nil
+}
+
+func (this *Transaction) handleCommitTransaction(message CommitTransactionCommand) error {
+	return nil
+}
+func (this *Transaction) handleTransactionCommitted(message TransactionCommittedEvent) error {
+	return nil
+}
+func (this *Transaction) handleTransactionCommitFailed(message TransactionCommitFailedEvent) error {
+	return nil
+}
+
+func (this *Transaction) handleAbortTransaction(message AbortTransactionCommand) error {
+	switch this.status {
+	case TransactionStateReady, TransactionStateWriting:
+		this.publisher.Raise(TransactionAbortedEvent{})
+	case TransactionStateAborted:
+		// already aborted
+	default:
+		return nil
+	}
+
 	return nil
 }
 
@@ -45,14 +119,6 @@ func (this *Transaction) Apply(message interface{}) {
 		this.applyTransactionCommitting(message)
 	case TransactionCommittedEvent:
 		this.applyTransactionCommitted(message)
-
-	case TransactionFailedEvent:
-		this.applyTransactionFailed(message)
-
-	case TransactionAbortedEvent:
-		this.applyTransactionAborted(message)
-	case TransactionAbortFailedEvent:
-		this.applyTransactionAbortFailed(message)
 	}
 }
 
@@ -75,11 +141,12 @@ func (this *Transaction) applyTransactionCommitting(message TransactionCommittin
 func (this *Transaction) applyTransactionCommitted(message TransactionCommittedEvent) {
 }
 
-func (this *Transaction) applyTransactionFailed(message TransactionFailedEvent) {
-}
-
-func (this *Transaction) applyTransactionAborted(message TransactionAbortedEvent) {
-
-}
-func (this *Transaction) applyTransactionAbortFailed(message TransactionAbortFailedEvent) {
-}
+const (
+	TransactionStateReady = iota
+	TransactionStateWriting
+	TransactionStateWritingCommitting
+	TransactionStateCommitting
+	TransactionStateCommitted
+	TransactionStateAborted
+	TransactionStateFailed
+)
