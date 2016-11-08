@@ -78,11 +78,16 @@ func (this *TransactionAggregate) handleAbortTransaction(message AbortTransactio
 	return nil
 }
 
+func (this *TransactionAggregate) Replay(message interface{}) {
+	// for this project, we won't be event sourcing, but this is here to indicate a minor breakthrough in how events
+	// both internal and external--are processed.
+	this.apply(message)
+}
 func (this *TransactionAggregate) raise(message interface{}) {
 	this.messages.Add(message)
-	this.InternalApply(message)
+	this.apply(message)
 }
-func (this *TransactionAggregate) InternalApply(message interface{}) {
+func (this *TransactionAggregate) apply(message interface{}) {
 	switch message := message.(type) {
 
 	case TransactionStartedEvent:
