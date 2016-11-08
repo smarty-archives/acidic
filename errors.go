@@ -1,4 +1,4 @@
-package kvacid
+package acidic
 
 import "errors"
 
