@@ -134,3 +134,7 @@ type ItemMergedEvent struct {
 type MessageContainer interface {
 	Add(interface{})
 }
+
+type Raiser interface {
+	Raise(interface{})
+}

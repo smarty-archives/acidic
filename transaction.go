@@ -3,14 +3,14 @@ package acidic
 import "time"
 
 type Transaction struct {
-	raised   MessageContainer
+	raised   Raiser
 	sequence uint64
 	started  time.Time
 	updated  time.Time
 	ttl      time.Duration
 }
 
-func NewTransaction(raised MessageContainer, started time.Time, ttl time.Duration) *Transaction {
+func NewTransaction(raised Raiser, started time.Time, ttl time.Duration) *Transaction {
 	return &Transaction{
 		raised:   raised,
 		sequence: 0,
@@ -18,6 +18,10 @@ func NewTransaction(raised MessageContainer, started time.Time, ttl time.Duratio
 		updated:  started,
 		ttl:      ttl,
 	}
+}
+
+func (this *Transaction) Handle(message interface{}) error {
+	return nil
 }
 
 func (this *Transaction) Apply(message interface{}) {

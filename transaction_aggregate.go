@@ -25,85 +25,44 @@ func (this *TransactionAggregate) Handle(message interface{}) error {
 	switch message := message.(type) {
 
 	case StoreItemCommand:
-		return this.handleStoreItem(message)
+		message.TransactionID = this.startTransaction(message.TransactionID)
+		return this.handle(message.TransactionID, message)
 	case ItemStoredEvent:
-		return this.handleItemStored(message)
+		return this.handle(message.TransactionID, message)
 	case ItemStoreFailedEvent:
-		return this.handleItemStoreFailed(message)
+		return this.handle(message.TransactionID, message)
 
 	case DeleteItemCommand:
-		return this.handleDeleteItem(message)
+		message.TransactionID = this.startTransaction(message.TransactionID)
+		return this.handle(message.TransactionID, message)
 	case ItemDeletedEvent:
-		return this.handleItemDeleted(message)
+		return this.handle(message.TransactionID, message)
 	case ItemDeleteFailedEvent:
-		return this.handleItemDeleteFailed(message)
+		return this.handle(message.TransactionID, message)
 
 	case CommitTransactionCommand:
-		return this.handleCommitTransaction(message)
+		return this.handle(message.TransactionID, message)
 	case TransactionCommittedEvent:
-		return this.handleTransactionCommitted(message)
+		return this.handle(message.TransactionID, message)
 	case TransactionCommitFailedEvent:
-		return this.handleTransactionCommitFailed(message)
+		return this.handle(message.TransactionID, message)
 
 	case AbortTransactionCommand:
-		return this.handleAbortTransaction(message)
+		return this.handle(message.TransactionID, message)
 
 	default:
 		return nil
 	}
 }
-
-func (this *TransactionAggregate) handleStoreItem(message StoreItemCommand) error {
-	message.TransactionID = this.startTransaction(message.TransactionID)
-
-	// TODO
-	return nil
-}
-func (this *TransactionAggregate) handleItemStored(message ItemStoredEvent) error {
-	return nil
-}
-func (this *TransactionAggregate) handleItemStoreFailed(message ItemStoreFailedEvent) error {
-	return this.raiseTransactionFailed(message.TransactionID)
+func (this *TransactionAggregate) handle(transactionID string, message interface{}) error {
+	if transaction, contains := this.open[transactionID]; contains {
+		return transaction.Handle(message)
+	} else {
+		return TransactionNotFoundError
+	}
 }
 
-func (this *TransactionAggregate) handleDeleteItem(message DeleteItemCommand) error {
-	message.TransactionID = this.startTransaction(message.TransactionID)
-
-	// TODO
-	return nil
-}
-func (this *TransactionAggregate) handleItemDeleted(message ItemDeletedEvent) error {
-	return nil
-}
-func (this *TransactionAggregate) handleItemDeleteFailed(message ItemDeleteFailedEvent) error {
-	return this.raiseTransactionFailed(message.TransactionID)
-}
-
-func (this *TransactionAggregate) handleCommitTransaction(message CommitTransactionCommand) error {
-	return nil
-}
-func (this *TransactionAggregate) handleTransactionCommitted(message TransactionCommittedEvent) error {
-	return nil
-}
-func (this *TransactionAggregate) handleTransactionCommitFailed(message TransactionCommitFailedEvent) error {
-	return this.raiseTransactionFailed(message.TransactionID)
-}
-
-func (this *TransactionAggregate) handleAbortTransaction(message AbortTransactionCommand) error {
-	return nil
-}
-
-func (this *TransactionAggregate) raiseTransactionFailed(transactionID string) error {
-	this.raise(TransactionFailedEvent{
-		Timestamp:     clock.UTCNow(),
-		TransactionID: transactionID,
-		Reason:        WriteFailedError,
-	})
-
-	return WriteFailedError
-}
-
-func (this *TransactionAggregate) raise(message interface{}) {
+func (this *TransactionAggregate) Raise(message interface{}) {
 	this.raised.Add(message)
 	this.apply(message)
 }
@@ -143,7 +102,7 @@ func (this *TransactionAggregate) apply(message interface{}) {
 }
 
 func (this *TransactionAggregate) applyTransactionStarted(message TransactionStartedEvent) {
-	this.open[message.TransactionID] = NewTransaction(this.raised, message.Timestamp, message.TTL)
+	this.open[message.TransactionID] = NewTransaction(this, message.Timestamp, message.TTL)
 }
 func (this *TransactionAggregate) applyTransactionAborted(message TransactionAbortedEvent) {
 	this.removeTransaction(message.TransactionID)
@@ -162,7 +121,7 @@ func (this *TransactionAggregate) startTransaction(transactionID string) string 
 		return transactionID
 	}
 
-	this.raise(TransactionStartedEvent{
+	this.Raise(TransactionStartedEvent{
 		Timestamp:     clock.UTCNow(),
 		TransactionID: random.GUIDString(),
 		TTL:           this.ttl,
