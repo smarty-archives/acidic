@@ -22,7 +22,6 @@ type LoadItemResponse struct {
 }
 
 type StoreItemCommand struct {
-	Timestamp     time.Time
 	TransactionID string // optional (blank = new tx)
 	Key           string
 	ETag          string // optional
@@ -37,7 +36,6 @@ type TransactionStartedEvent struct {
 	Expiration    time.Time
 }
 type StoringItemEvent struct {
-	Timestamp     time.Time
 	Sequence      uint64 // incremented for each mutating operation; this helps us to know which Store was the most recent one
 	TransactionID string
 	Key           string
@@ -62,14 +60,12 @@ type ItemStoreFailedEvent struct {
 }
 
 type DeleteItemCommand struct {
-	Timestamp     time.Time
 	TransactionID string // optional (blank = new tx)
 	Key           string
 	ETag          string // optional
 	Context       *MessageContext
 }
 type DeletingItemEvent struct {
-	Timestamp     time.Time
 	Sequence      uint64
 	TransactionID string
 	Key           string
@@ -90,12 +86,10 @@ type ItemDeleteFailedEvent struct {
 }
 
 type CommitTransactionCommand struct {
-	Timestamp     time.Time
 	TransactionID string
 	Context       *MessageContext
 }
 type TransactionCommittingEvent struct {
-	Timestamp     time.Time
 	TransactionID string
 	Context       *MessageContext
 }
@@ -111,7 +105,6 @@ type TransactionFailedEvent struct {
 }
 
 type AbortTransactionCommand struct {
-	Timestamp     time.Time
 	TransactionID string
 	Context       *MessageContext
 }
