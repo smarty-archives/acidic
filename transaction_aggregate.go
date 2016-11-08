@@ -1,12 +1,12 @@
 package acidic
 
 type TransactionAggregate struct {
-	messages MessageContainer
+	raised MessageContainer
 }
 
-func NewTransactionAggregate(messages MessageContainer) *TransactionAggregate {
+func NewTransactionAggregate(raised MessageContainer) *TransactionAggregate {
 	return &TransactionAggregate{
-		messages: messages,
+		raised: raised,
 	}
 }
 
@@ -84,7 +84,7 @@ func (this *TransactionAggregate) Replay(message interface{}) {
 	this.apply(message)
 }
 func (this *TransactionAggregate) raise(message interface{}) {
-	this.messages.Add(message)
+	this.raised.Add(message)
 	this.apply(message)
 }
 func (this *TransactionAggregate) apply(message interface{}) {
