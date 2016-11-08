@@ -8,4 +8,5 @@ var (
 	KeyNotFoundError        = errors.New("")
 	AccessDeniedError       = errors.New("")
 	StorageUnavailable      = errors.New("")
+	WriteFailedError        = errors.New("")
 )

@@ -97,6 +97,10 @@ type TransactionCommittedEvent struct {
 	Commit        uint64
 	TransactionID string
 }
+type TransactionCommitFailedEvent struct {
+	Timestamp     time.Time
+	TransactionID string
+}
 
 type TransactionFailedEvent struct {
 	Timestamp     time.Time
