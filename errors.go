@@ -10,4 +10,5 @@ var (
 	AccessDeniedError        = errors.New("")
 	StorageUnavailable       = errors.New("")
 	WriteFailedError         = errors.New("")
+	InvalidTransitionError   = errors.New("Transaction cannot transition to that state.")
 )

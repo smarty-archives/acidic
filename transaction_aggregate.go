@@ -87,9 +87,11 @@ func (this *TransactionAggregate) apply(message interface{}) {
 		this.tryApply(message.TransactionID, message)
 
 	case TransactionCommittingEvent:
+		// TODO: consider keys that are committing/committed in other transactions which might conflict here
+		// TODO: maybe we take a dependency on the KeyMapProjection here???
 		this.tryApply(message.TransactionID, message)
 	case TransactionCommittedEvent:
-		this.tryApply(message.TransactionID, message)
+		this.removeTransaction(message.TransactionID)
 
 	case TransactionFailedEvent:
 		this.removeTransaction(message.TransactionID)

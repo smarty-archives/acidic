@@ -8,6 +8,7 @@ import (
 type LoadItemRequest struct {
 	TransactionID string // optional
 	Key           string
+	Revision      string // optional (provided by KeyMapProjection)
 	ETag          string // optional
 	Context       *MessageContext
 }
@@ -125,6 +126,7 @@ type ItemMergedEvent struct {
 	Key           string
 	Revision      string
 	ETag          string
+	Expiration    time.Time // the point at which the entry is considered fully merged by the underlying storage
 }
 
 type MessageContainer interface {

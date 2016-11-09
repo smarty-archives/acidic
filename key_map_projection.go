@@ -1,10 +1,32 @@
 package acidic
 
+import "time"
+
 type KeyMapProjection struct {
+	Head      uint64           `json:"head"`
+	Tail      uint64           `json:"tail"`
+	Committed map[string]*Item `json:"committed"`
+	open      map[string]map[string]*Item
 }
 
 func NewKeyMapProjection() *KeyMapProjection {
 	return &KeyMapProjection{}
+}
+
+func (this *KeyMapProjection) Translate(item LoadItemRequest) (LoadItemRequest, error) {
+	// TODO
+	if len(item.TransactionID) > 0 {
+		if items, contains := this.open[item.TransactionID]; !contains {
+			return LoadItemRequest{}, TransactionNotFoundError
+		} else if item, contains := items[item.Key]; contains {
+			return LoadItemRequest{
+				Key:      item.Key,
+				Revision: item.Revision,
+			}, nil
+		}
+	}
+
+	return LoadItemRequest{}, nil
 }
 
 func (this *KeyMapProjection) Apply(message interface{}) {
@@ -17,15 +39,11 @@ func (this *KeyMapProjection) Apply(message interface{}) {
 		this.applyStoringItem(message)
 	case ItemStoredEvent:
 		this.applyItemStored(message)
-	case ItemStoreFailedEvent:
-		this.applyItemStoreFailed(message)
 
 	case DeletingItemEvent:
 		this.applyDeletingItem(message)
 	case ItemDeletedEvent:
 		this.applyItemDeleted(message)
-	case ItemDeleteFailedEvent:
-		this.applyItemDeleteFailed(message)
 
 	case TransactionCommittingEvent:
 		this.applyTransactionCommitting(message)
@@ -50,14 +68,10 @@ func (this *KeyMapProjection) applyStoringItem(message StoringItemEvent) {
 }
 func (this *KeyMapProjection) applyItemStored(message ItemStoredEvent) {
 }
-func (this *KeyMapProjection) applyItemStoreFailed(message ItemStoreFailedEvent) {
-}
 
 func (this *KeyMapProjection) applyDeletingItem(message DeletingItemEvent) {
 }
 func (this *KeyMapProjection) applyItemDeleted(message ItemDeletedEvent) {
-}
-func (this *KeyMapProjection) applyItemDeleteFailed(message ItemDeleteFailedEvent) {
 }
 
 func (this *KeyMapProjection) applyTransactionCommitting(message TransactionCommittingEvent) {
@@ -72,4 +86,10 @@ func (this *KeyMapProjection) applyTransactionAborted(message TransactionAborted
 }
 
 func (this *KeyMapProjection) applyItemMerged(message ItemMergedEvent) {
+}
+
+type Item struct {
+	Key        string
+	Revision   string
+	Expiration time.Time
 }

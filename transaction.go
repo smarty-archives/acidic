@@ -1,6 +1,9 @@
 package acidic
 
-import "time"
+import (
+	"github.com/smartystreets/clock"
+	"time"
+)
 
 type Transaction struct {
 	publisher Publisher
@@ -88,14 +91,15 @@ func (this *Transaction) handleTransactionCommitFailed(message TransactionCommit
 func (this *Transaction) handleAbortTransaction(message AbortTransactionCommand) error {
 	switch this.status {
 	case TransactionStateReady, TransactionStateWriting:
-		this.publisher.Raise(TransactionAbortedEvent{})
-	case TransactionStateAborted:
-		// already aborted
-	default:
-		return nil
-	}
+		this.publisher.Raise(TransactionAbortedEvent{
+			Timestamp:     clock.UTCNow(),
+			TransactionID: message.TransactionID,
+		})
 
-	return nil
+		return nil
+	default:
+		return InvalidTransitionError
+	}
 }
 
 func (this *Transaction) Apply(message interface{}) {
@@ -117,8 +121,6 @@ func (this *Transaction) Apply(message interface{}) {
 
 	case TransactionCommittingEvent:
 		this.applyTransactionCommitting(message)
-	case TransactionCommittedEvent:
-		this.applyTransactionCommitted(message)
 	}
 }
 
@@ -137,8 +139,13 @@ func (this *Transaction) applyItemDeleteFailed(message ItemDeleteFailedEvent) {
 }
 
 func (this *Transaction) applyTransactionCommitting(message TransactionCommittingEvent) {
-}
-func (this *Transaction) applyTransactionCommitted(message TransactionCommittedEvent) {
+	if this.status == TransactionStateReady {
+		this.status = TransactionStateCommitting
+	} else {
+		this.status = TransactionStateWritingCommitting
+	}
+
+	// park any contexts needed to respond to
 }
 
 const (
@@ -146,7 +153,7 @@ const (
 	TransactionStateWriting
 	TransactionStateWritingCommitting
 	TransactionStateCommitting
-	TransactionStateCommitted
-	TransactionStateAborted
-	TransactionStateFailed
+	// TransactionStateCommitted
+	// TransactionStateAborted
+	// TransactionStateFailed
 )
