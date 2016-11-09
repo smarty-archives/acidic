@@ -5,28 +5,12 @@ import "time"
 type KeyMapProjection struct {
 	Head      uint64           `json:"head"`
 	Tail      uint64           `json:"tail"`
-	Committed map[string]*Item `json:"committed"`
+	Committed map[string]*Item `json:"map"`
 	open      map[string]map[string]*Item
 }
 
 func NewKeyMapProjection() *KeyMapProjection {
 	return &KeyMapProjection{}
-}
-
-func (this *KeyMapProjection) Translate(item LoadItemRequest) (LoadItemRequest, error) {
-	// TODO
-	if len(item.TransactionID) > 0 {
-		if items, contains := this.open[item.TransactionID]; !contains {
-			return LoadItemRequest{}, TransactionNotFoundError
-		} else if item, contains := items[item.Key]; contains {
-			return LoadItemRequest{
-				Key:      item.Key,
-				Revision: item.Revision,
-			}, nil
-		}
-	}
-
-	return LoadItemRequest{}, nil
 }
 
 func (this *KeyMapProjection) Apply(message interface{}) {
@@ -35,18 +19,12 @@ func (this *KeyMapProjection) Apply(message interface{}) {
 	case TransactionStartedEvent:
 		this.applyTransactionStarted(message)
 
-	case StoringItemEvent:
-		this.applyStoringItem(message)
 	case ItemStoredEvent:
 		this.applyItemStored(message)
 
 	case DeletingItemEvent:
 		this.applyDeletingItem(message)
-	case ItemDeletedEvent:
-		this.applyItemDeleted(message)
 
-	case TransactionCommittingEvent:
-		this.applyTransactionCommitting(message)
 	case TransactionCommittedEvent:
 		this.applyTransactionCommitted(message)
 
@@ -62,34 +40,76 @@ func (this *KeyMapProjection) Apply(message interface{}) {
 }
 
 func (this *KeyMapProjection) applyTransactionStarted(message TransactionStartedEvent) {
+	this.open[message.TransactionID] = make(map[string]*Item, 16)
 }
 
-func (this *KeyMapProjection) applyStoringItem(message StoringItemEvent) {
-}
 func (this *KeyMapProjection) applyItemStored(message ItemStoredEvent) {
+	this.findItem(message.TransactionID, message.CanonicalKey).UpdateStored(message.Sequence, message.Key, message.Revision)
 }
-
 func (this *KeyMapProjection) applyDeletingItem(message DeletingItemEvent) {
+	this.findItem(message.TransactionID, message.Key).UpdateDeleted(message.Sequence)
 }
-func (this *KeyMapProjection) applyItemDeleted(message ItemDeletedEvent) {
+func (this *KeyMapProjection) findItem(transactionID, key string) *Item {
+	items := this.open[transactionID]
+	if items == nil {
+		return nil
+	}
+
+	item := items[key]
+	if item == nil {
+		item = &Item{}
+		items[key] = item
+	}
+
+	return item
 }
 
-func (this *KeyMapProjection) applyTransactionCommitting(message TransactionCommittingEvent) {
-}
 func (this *KeyMapProjection) applyTransactionCommitted(message TransactionCommittedEvent) {
+	// move items to the committed index, set the head index to the sequence of the commit
+	// CRITICAL BUG: all transactions must associated with a given commit must happen together
 }
 
 func (this *KeyMapProjection) applyTransactionFailed(message TransactionFailedEvent) {
+	delete(this.open, message.TransactionID)
 }
 
 func (this *KeyMapProjection) applyTransactionAborted(message TransactionAbortedEvent) {
+	delete(this.open, message.TransactionID)
 }
 
 func (this *KeyMapProjection) applyItemMerged(message ItemMergedEvent) {
+
+}
+
+func (this *KeyMapProjection) applyCommitMerged() {
+	// TODO
 }
 
 type Item struct {
-	Key        string
-	Revision   string
-	Expiration time.Time
+	Sequence   uint64    `json:"-"`
+	Commit     uint64    `json:"commit,omitempty"`
+	Expiration time.Time `json:"expiration,omitempty"`
+	Key        string    `json:"key,omitempty"`
+	Revision   string    `json:"version,omitempty"`
+	Deleted    bool      `json:"deleted,omitempty"`
+}
+
+func (this *Item) UpdateDeleted(sequence, commit uint64) {
+	if this != nil && sequence >= this.Sequence {
+		this.Sequence = sequence
+		this.Key = ""
+		this.Revision = ""
+		this.Deleted = true
+		this.Expiration = 0
+	}
+}
+
+func (this *Item) UpdateStored(sequence, commit uint64, key, revision string) {
+	if this != nil && sequence >= this.Sequence {
+		this.Sequence = sequence
+		this.Key = key
+		this.Revision = revision
+		this.Deleted = false
+		this.Expiration = 0
+	}
 }

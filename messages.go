@@ -48,6 +48,7 @@ type ItemStoredEvent struct {
 	Timestamp     time.Time
 	Sequence      uint64
 	TransactionID string
+	CanonicalKey  string
 	Key           string
 	Revision      string
 	ETag          string
@@ -92,6 +93,7 @@ type CommitTransactionCommand struct {
 type TransactionCommittingEvent struct {
 	TransactionID string
 	Context       *MessageContext
+	Contents      map[string]*CommitItem
 }
 type TransactionCommittedEvent struct {
 	Timestamp     time.Time
@@ -118,6 +120,12 @@ type TransactionAbortedEvent struct {
 	TransactionID string
 }
 
+type CommitWrittenEvent struct {
+	Timestamp      time.Time
+	Commit         uint64
+	TransactionIDs []string
+}
+
 type ItemMergedEvent struct {
 	Timestamp     time.Time
 	Commit        uint64
@@ -135,4 +143,10 @@ type MessageContainer interface {
 
 type Publisher interface {
 	Raise(interface{})
+}
+
+type CommitItem struct {
+	Key      string
+	Revision string
+	ETag     string
 }
