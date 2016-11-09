@@ -3,17 +3,19 @@ package acidic
 import (
 	"time"
 
+	"github.com/smartystreets/acidic/contracts"
+	"github.com/smartystreets/acidic/contracts/messages"
 	"github.com/smartystreets/clock"
 	"github.com/smartystreets/random"
 )
 
 type TransactionAggregate struct {
-	raised MessageContainer
+	raised messages.MessageContainer
 	open   map[string]*Transaction
 	ttl    time.Duration
 }
 
-func NewTransactionAggregate(raised MessageContainer) *TransactionAggregate {
+func NewTransactionAggregate(raised messages.MessageContainer) *TransactionAggregate {
 	return &TransactionAggregate{
 		raised: raised,
 		open:   make(map[string]*Transaction),
@@ -24,30 +26,30 @@ func NewTransactionAggregate(raised MessageContainer) *TransactionAggregate {
 func (this *TransactionAggregate) Handle(message interface{}) error {
 	switch message := message.(type) {
 
-	case StoreItemCommand:
+	case messages.StoreItemCommand:
 		message.TransactionID = this.tryStartTransaction(message.TransactionID)
 		return this.tryHandle(message.TransactionID, message)
-	case ItemStoredEvent:
+	case messages.ItemStoredEvent:
 		return this.tryHandle(message.TransactionID, message)
-	case ItemStoreFailedEvent:
+	case messages.ItemStoreFailedEvent:
 		return this.tryHandle(message.TransactionID, message)
 
-	case DeleteItemCommand:
+	case messages.DeleteItemCommand:
 		message.TransactionID = this.tryStartTransaction(message.TransactionID)
 		return this.tryHandle(message.TransactionID, message)
-	case ItemDeletedEvent:
+	case messages.ItemDeletedEvent:
 		return this.tryHandle(message.TransactionID, message)
-	case ItemDeleteFailedEvent:
-		return this.tryHandle(message.TransactionID, message)
-
-	case CommitTransactionCommand:
-		return this.tryHandle(message.TransactionID, message)
-	case TransactionCommittedEvent:
-		return this.tryHandle(message.TransactionID, message)
-	case TransactionCommitFailedEvent:
+	case messages.ItemDeleteFailedEvent:
 		return this.tryHandle(message.TransactionID, message)
 
-	case AbortTransactionCommand:
+	case messages.CommitTransactionCommand:
+		return this.tryHandle(message.TransactionID, message)
+	case messages.TransactionCommittedEvent:
+		return this.tryHandle(message.TransactionID, message)
+	case messages.TransactionCommitFailedEvent:
+		return this.tryHandle(message.TransactionID, message)
+
+	case messages.AbortTransactionCommand:
 		return this.tryHandle(message.TransactionID, message)
 
 	default:
@@ -58,7 +60,7 @@ func (this *TransactionAggregate) tryHandle(transactionID string, message interf
 	if transaction, contains := this.open[transactionID]; contains {
 		return transaction.Handle(message)
 	} else {
-		return TransactionNotFoundError
+		return contracts.TransactionNotFoundError
 	}
 }
 
@@ -69,39 +71,39 @@ func (this *TransactionAggregate) Raise(message interface{}) {
 func (this *TransactionAggregate) apply(message interface{}) {
 	switch message := message.(type) {
 
-	case TransactionStartedEvent:
+	case messages.TransactionStartedEvent:
 		this.applyTransactionStarted(message)
 
-	case StoringItemEvent:
+	case messages.StoringItemEvent:
 		this.tryApply(message.TransactionID, message)
-	case ItemStoredEvent:
+	case messages.ItemStoredEvent:
 		this.tryApply(message.TransactionID, message)
-	case ItemStoreFailedEvent:
-		this.tryApply(message.TransactionID, message)
-
-	case DeletingItemEvent:
-		this.tryApply(message.TransactionID, message)
-	case ItemDeletedEvent:
-		this.tryApply(message.TransactionID, message)
-	case ItemDeleteFailedEvent:
+	case messages.ItemStoreFailedEvent:
 		this.tryApply(message.TransactionID, message)
 
-	case TransactionCommittingEvent:
+	case messages.DeletingItemEvent:
+		this.tryApply(message.TransactionID, message)
+	case messages.ItemDeletedEvent:
+		this.tryApply(message.TransactionID, message)
+	case messages.ItemDeleteFailedEvent:
+		this.tryApply(message.TransactionID, message)
+
+	case messages.TransactionCommittingEvent:
 		// TODO: consider keys that are committing/committed in other transactions which might conflict here
 		// TODO: maybe we take a dependency on the KeyMapProjection here???
 		this.tryApply(message.TransactionID, message)
-	case TransactionCommittedEvent:
+	case messages.TransactionCommittedEvent:
 		this.removeTransaction(message.TransactionID)
 
-	case TransactionFailedEvent:
+	case messages.TransactionFailedEvent:
 		this.removeTransaction(message.TransactionID)
 
-	case TransactionAbortedEvent:
+	case messages.TransactionAbortedEvent:
 		this.removeTransaction(message.TransactionID)
 	}
 }
 
-func (this *TransactionAggregate) applyTransactionStarted(message TransactionStartedEvent) {
+func (this *TransactionAggregate) applyTransactionStarted(message messages.TransactionStartedEvent) {
 	this.open[message.TransactionID] = NewTransaction(this, message.Timestamp, message.TTL)
 }
 func (this *TransactionAggregate) tryApply(transactionID string, message interface{}) {
@@ -115,7 +117,7 @@ func (this *TransactionAggregate) tryStartTransaction(transactionID string) stri
 		return transactionID
 	}
 
-	this.Raise(TransactionStartedEvent{
+	this.Raise(messages.TransactionStartedEvent{
 		Timestamp:     clock.UTCNow(),
 		TransactionID: random.GUIDString(),
 		TTL:           this.ttl,

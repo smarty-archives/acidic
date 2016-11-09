@@ -1,6 +1,9 @@
 package acidic
 
-import "time"
+import (
+	"github.com/smartystreets/acidic/contracts/messages"
+	"time"
+)
 
 type KeyMapProjection struct {
 	Head      uint64           `json:"head"`
@@ -16,37 +19,37 @@ func NewKeyMapProjection() *KeyMapProjection {
 func (this *KeyMapProjection) Apply(message interface{}) {
 	switch message := message.(type) {
 
-	case TransactionStartedEvent:
+	case messages.TransactionStartedEvent:
 		this.applyTransactionStarted(message)
 
-	case ItemStoredEvent:
+	case messages.ItemStoredEvent:
 		this.applyItemStored(message)
 
-	case DeletingItemEvent:
+	case messages.DeletingItemEvent:
 		this.applyDeletingItem(message)
 
-	case TransactionCommittedEvent:
+	case messages.TransactionCommittedEvent:
 		this.applyTransactionCommitted(message)
 
-	case TransactionFailedEvent:
+	case messages.TransactionFailedEvent:
 		this.applyTransactionFailed(message)
 
-	case TransactionAbortedEvent:
+	case messages.TransactionAbortedEvent:
 		this.applyTransactionAborted(message)
 
-	case ItemMergedEvent:
+	case messages.ItemMergedEvent:
 		this.applyItemMerged(message)
 	}
 }
 
-func (this *KeyMapProjection) applyTransactionStarted(message TransactionStartedEvent) {
+func (this *KeyMapProjection) applyTransactionStarted(message messages.TransactionStartedEvent) {
 	this.open[message.TransactionID] = make(map[string]*Item, 16)
 }
 
-func (this *KeyMapProjection) applyItemStored(message ItemStoredEvent) {
+func (this *KeyMapProjection) applyItemStored(message messages.ItemStoredEvent) {
 	this.findItem(message.TransactionID, message.CanonicalKey).UpdateStored(message.Sequence, message.Key, message.Revision)
 }
-func (this *KeyMapProjection) applyDeletingItem(message DeletingItemEvent) {
+func (this *KeyMapProjection) applyDeletingItem(message messages.DeletingItemEvent) {
 	this.findItem(message.TransactionID, message.Key).UpdateDeleted(message.Sequence)
 }
 func (this *KeyMapProjection) findItem(transactionID, key string) *Item {
@@ -64,20 +67,20 @@ func (this *KeyMapProjection) findItem(transactionID, key string) *Item {
 	return item
 }
 
-func (this *KeyMapProjection) applyTransactionCommitted(message TransactionCommittedEvent) {
+func (this *KeyMapProjection) applyTransactionCommitted(message messages.TransactionCommittedEvent) {
 	// move items to the committed index, set the head index to the sequence of the commit
 	// CRITICAL BUG: all transactions must associated with a given commit must happen together
 }
 
-func (this *KeyMapProjection) applyTransactionFailed(message TransactionFailedEvent) {
+func (this *KeyMapProjection) applyTransactionFailed(message messages.TransactionFailedEvent) {
 	delete(this.open, message.TransactionID)
 }
 
-func (this *KeyMapProjection) applyTransactionAborted(message TransactionAbortedEvent) {
+func (this *KeyMapProjection) applyTransactionAborted(message messages.TransactionAbortedEvent) {
 	delete(this.open, message.TransactionID)
 }
 
-func (this *KeyMapProjection) applyItemMerged(message ItemMergedEvent) {
+func (this *KeyMapProjection) applyItemMerged(message messages.ItemMergedEvent) {
 
 }
 
@@ -94,22 +97,22 @@ type Item struct {
 	Deleted    bool      `json:"deleted,omitempty"`
 }
 
-func (this *Item) UpdateDeleted(sequence, commit uint64) {
+func (this *Item) UpdateDeleted(sequence uint64) {
 	if this != nil && sequence >= this.Sequence {
 		this.Sequence = sequence
 		this.Key = ""
 		this.Revision = ""
 		this.Deleted = true
-		this.Expiration = 0
+		this.Expiration = time.Time{}
 	}
 }
 
-func (this *Item) UpdateStored(sequence, commit uint64, key, revision string) {
+func (this *Item) UpdateStored(sequence uint64, key, revision string) {
 	if this != nil && sequence >= this.Sequence {
 		this.Sequence = sequence
 		this.Key = key
 		this.Revision = revision
 		this.Deleted = false
-		this.Expiration = 0
+		this.Expiration = time.Time{}
 	}
 }

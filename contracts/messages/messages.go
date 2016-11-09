@@ -1,4 +1,4 @@
-package acidic
+package messages
 
 import (
 	"io"

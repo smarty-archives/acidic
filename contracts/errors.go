@@ -1,4 +1,4 @@
-package acidic
+package contracts
 
 import "errors"
 
