@@ -25,7 +25,6 @@ type CommitItem struct {
 	ETag     string
 }
 
-
 type CommitWrittenEvent struct {
 	Timestamp      time.Time
 	Commit         uint64
