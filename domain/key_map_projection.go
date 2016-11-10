@@ -6,10 +6,29 @@ import (
 )
 
 type KeyMapProjection struct {
-	Head      uint64           `json:"head"`
-	Tail      uint64           `json:"tail"`
-	Committed map[string]*Item `json:"map"`
-	open      map[string]map[string]*Item
+	Head      uint64                                 `json:"head"`
+	Tail      uint64                                 `json:"tail"`
+	Committed map[string]*CommittedItem              `json:"map"`
+	open      map[string]map[string]*UncommittedItem `json:"-"`
+}
+
+type CommittedItem struct {
+	Commit     uint64    `json:"commit,omitempty"`
+	Expiration time.Time `json:"expiration,omitempty"`
+	Key        string    `json:"key,omitempty"`
+	Revision   string    `json:"version,omitempty"`
+	ETag       string    `json:"etag,omitempty"`
+	Deleted    bool      `json:"deleted,omitempty"`
+}
+
+type UncommittedItem struct {
+	Sequence   uint64
+	Commit     uint64
+	Expiration time.Time
+	Key        string
+	Revision   string
+	ETag       string
+	Deleted    bool
 }
 
 func NewKeyMapProjection() *KeyMapProjection {
@@ -43,16 +62,18 @@ func (this *KeyMapProjection) Apply(message interface{}) {
 }
 
 func (this *KeyMapProjection) applyTransactionStarted(message messages.TransactionStartedEvent) {
-	this.open[message.TransactionID] = make(map[string]*Item, 16)
+	this.open[message.TransactionID] = make(map[string]*UncommittedItem, 16)
 }
 
 func (this *KeyMapProjection) applyItemStored(message messages.ItemStoredEvent) {
-	this.findItem(message.TransactionID, message.CanonicalKey).UpdateStored(message.Sequence, message.Key, message.Revision)
+	item := this.findUncommittedItem(message.TransactionID, message.CanonicalKey)
+	item.UpdateStored(message.Sequence, message.Key, message.Revision)
 }
 func (this *KeyMapProjection) applyDeletingItem(message messages.DeletingItemEvent) {
-	this.findItem(message.TransactionID, message.Key).UpdateDeleted(message.Sequence)
+	item := this.findUncommittedItem(message.TransactionID, message.Key)
+	item.UpdateDeleted(message.Sequence)
 }
-func (this *KeyMapProjection) findItem(transactionID, key string) *Item {
+func (this *KeyMapProjection) findUncommittedItem(transactionID, key string) *UncommittedItem {
 	items := this.open[transactionID]
 	if items == nil {
 		return nil
@@ -60,7 +81,7 @@ func (this *KeyMapProjection) findItem(transactionID, key string) *Item {
 
 	item := items[key]
 	if item == nil {
-		item = &Item{}
+		item = &UncommittedItem{}
 		items[key] = item
 	}
 
@@ -88,16 +109,7 @@ func (this *KeyMapProjection) applyCommitMerged() {
 	// TODO
 }
 
-type Item struct {
-	Sequence   uint64    `json:"-"`
-	Commit     uint64    `json:"commit,omitempty"`
-	Expiration time.Time `json:"expiration,omitempty"`
-	Key        string    `json:"key,omitempty"`
-	Revision   string    `json:"version,omitempty"`
-	Deleted    bool      `json:"deleted,omitempty"`
-}
-
-func (this *Item) UpdateDeleted(sequence uint64) {
+func (this *UncommittedItem) UpdateDeleted(sequence uint64) {
 	if this != nil && sequence >= this.Sequence {
 		this.Sequence = sequence
 		this.Key = ""
@@ -107,7 +119,7 @@ func (this *Item) UpdateDeleted(sequence uint64) {
 	}
 }
 
-func (this *Item) UpdateStored(sequence uint64, key, revision string) {
+func (this *UncommittedItem) UpdateStored(sequence uint64, key, revision string) {
 	if this != nil && sequence >= this.Sequence {
 		this.Sequence = sequence
 		this.Key = key
