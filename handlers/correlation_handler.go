@@ -7,6 +7,16 @@ type CorrelationHandler struct {
 	parked      map[string][]contracts.CallingContext
 }
 
+// NOTE TO SELF FOR TDD:
+
+// The intention of this handler is to facilitate "parking" a request while awaiting a future event.
+// A simple example of this might be a CommitTransactionCommand being sent. It takes time for the commit to be durably
+// written to storage. Once we get a TransactionCommittedEvent or TransactionCommitFailed message, we can release
+// this context furthermore, it might be that there are multiple Commit() instructions for a given transaction
+// and a single TransactionCommittedEvent (etc.) can release all parked contexts awaiting that result.
+// To further the example, once a given transaction is in a failed state, additional instructions such as Commit()
+// will return a failure error back to the caller.
+
 func NewCorrelationHandler(application contracts.ApplicationHandler) *CorrelationHandler {
 	return &CorrelationHandler{
 		application: application,
@@ -24,7 +34,7 @@ func (this *CorrelationHandler) Handle(message interface{}) {
 }
 
 func (this *CorrelationHandler) handleContext(envelope contracts.ContextEnvelope) {
-	result := this.application.Handle(envelope.Message)
+	result := this.application.Handle(envelope.Message) // typically command messages which may result in an error
 	correlationID := extractCorrelationID(envelope.Message)
 
 	if len(correlationID) > 0 && result == nil {
@@ -34,10 +44,21 @@ func (this *CorrelationHandler) handleContext(envelope contracts.ContextEnvelope
 	}
 }
 func (this *CorrelationHandler) handle(message interface{}) {
-	this.application.Handle(message)
+	this.application.Handle(message) // typically event messages coming in from backend writers (app shouldn't return a result)
 
 	if correlationID := extractCorrelationID(message); len(correlationID) > 0 {
 		this.release(correlationID, message)
+	}
+}
+
+func (this *CorrelationHandler) park(id string, context contracts.CallingContext) {
+	items := this.parked[id]
+	items = append(items, context)
+	this.parked[id] = items
+}
+func (this *CorrelationHandler) release(id string, message interface{}) {
+	for _, item := range this.parked[id] {
+		writeResult(item, message)
 	}
 }
 
@@ -51,15 +72,4 @@ func extractCorrelationID(message interface{}) string {
 func writeResult(context contracts.CallingContext, result interface{}) {
 	context.Write(result)
 	context.Close()
-}
-
-func (this *CorrelationHandler) park(id string, context contracts.CallingContext) {
-	items := this.parked[id]
-	items = append(items, context)
-	this.parked[id] = items
-}
-func (this *CorrelationHandler) release(id string, message interface{}) {
-	for _, item := range this.parked[id] {
-		writeResult(item, message)
-	}
 }
