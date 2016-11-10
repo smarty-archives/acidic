@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/smartystreets/acidic/contracts/messages"
 	"github.com/smartystreets/detour"
 )
 
@@ -31,4 +32,14 @@ func (this *DeleteInput) Validate() error {
 	errors.AppendIf(missingRequiredKey, len(this.Key) <= len("/"))
 
 	return errors
+}
+
+func (this *DeleteInput) ToMessage(stuff interface{}) messages.DeleteItemCommand {
+	// TODO: anything else?
+
+	return messages.DeleteItemCommand{
+		TransactionID: this.TransactionID,
+		Key:           this.Key,
+		ETag:          this.ConditionalETag,
+	}
 }

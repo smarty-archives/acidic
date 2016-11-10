@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/smartystreets/acidic/contracts/messages"
 	"github.com/smartystreets/detour"
 )
 
@@ -44,4 +45,14 @@ func (this *StoreInput) Close() error {
 	}
 
 	return nil
+}
+
+func (this *StoreInput) ToMessage() messages.StoreItemCommand {
+	return messages.StoreItemCommand{
+		TransactionID: this.TransactionID,
+		Key:           this.Key,
+		ETag:          this.ConditionalETag,
+		Metadata:      this.Metadata,
+		Payload:       this.Payload,
+	}
 }

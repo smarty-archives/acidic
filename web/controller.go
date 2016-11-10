@@ -17,41 +17,44 @@ func NewController(sender MessageSender) *Controller {
 
 func (this *Controller) Load(input *models.LoadInput) detour.Renderer {
 	if _, err := this.sender.Send(messages.LoadItemRequest{}); err != nil {
-		return translateError(err)
+		return NewErrorRenderer(err)
 	} else {
-		return nil // custom content result which lets us return a binary stream and custom headers
+		return nil // TODO: custom content result which lets us return a binary stream and custom headers
 	}
 }
 
 func (this *Controller) Store(input *models.StoreInput) detour.Renderer {
-	input.Close()
-	return nil
+	defer input.Close()
+
+	if _, err := this.sender.Send(input.ToMessage()); err != nil {
+		return NewErrorRenderer(err)
+	}
+
+	return nil // TODO
 }
 
 func (this *Controller) Delete(input *models.DeleteInput) detour.Renderer {
-	return nil
+	if _, err := this.sender.Send(input.ToMessage(nil)); err != nil {
+		return NewErrorRenderer(err)
+	}
+
+	return nil // TODO
 }
 
 // POST /tx/id
 func (this *Controller) Commit(input *models.TransactionInput) detour.Renderer {
-	message := messages.CommitTransactionCommand{TransactionID: input.TransactionID}
-	if _, err := this.sender.Send(message); err != nil {
-		return translateError(err)
+	if _, err := this.sender.Send(input.ToCommitMessage()); err != nil {
+		return NewErrorRenderer(err)
 	}
 
-	return nil // TODO: what kind of success do we return?
+	return nil // TODO
 }
 
 // DELETE /tx/id
 func (this *Controller) Abort(input *models.TransactionInput) detour.Renderer {
-	message := messages.AbortTransactionCommand{TransactionID: input.TransactionID}
-	if _, err := this.sender.Send(message); err != nil {
-		return translateError(err)
+	if _, err := this.sender.Send(input.ToAbortMessage()); err != nil {
+		return NewErrorRenderer(err)
 	}
 
-	return nil // TODO: what kind of success do we return?
-}
-
-func translateError(error) detour.Renderer {
 	return nil // TODO
 }

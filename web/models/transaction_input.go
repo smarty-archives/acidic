@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/smartystreets/acidic/contracts/messages"
 	"github.com/smartystreets/detour"
 )
 
@@ -25,4 +26,12 @@ func (this *TransactionInput) Validate() error {
 	errors.AppendIf(missingRequiredTransactionID, len(this.TransactionID) == 0)
 
 	return errors
+}
+
+func (this *TransactionInput) ToCommitMessage() messages.CommitTransactionCommand {
+	return messages.CommitTransactionCommand{TransactionID: this.TransactionID}
+}
+
+func (this *TransactionInput) ToAbortMessage() messages.AbortTransactionCommand {
+	return messages.AbortTransactionCommand{TransactionID: this.TransactionID}
 }
