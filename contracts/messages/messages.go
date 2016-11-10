@@ -10,7 +10,6 @@ type LoadItemRequest struct {
 	Key           string
 	Revision      string // optional (provided by KeyMapProjection)
 	ETag          string // optional
-	Context       *MessageContext
 }
 type LoadItemResponse struct {
 	TransactionID string // optional
@@ -28,7 +27,6 @@ type StoreItemCommand struct {
 	ETag          string // optional
 	Metadata      map[string]string
 	Payload       io.Reader
-	Context       *MessageContext
 }
 type TransactionStartedEvent struct {
 	Timestamp     time.Time
@@ -42,7 +40,6 @@ type StoringItemEvent struct {
 	ETag          string // optional
 	Payload       io.Reader
 	Metadata      map[string]string
-	Context       *MessageContext
 }
 type ItemStoredEvent struct {
 	Timestamp     time.Time
@@ -64,14 +61,12 @@ type DeleteItemCommand struct {
 	TransactionID string // optional (blank = new tx)
 	Key           string
 	ETag          string // optional
-	Context       *MessageContext
 }
 type DeletingItemEvent struct {
 	Sequence      uint64
 	TransactionID string
 	Key           string
 	ETag          string // optional
-	Context       *MessageContext
 }
 type ItemDeletedEvent struct {
 	Timestamp     time.Time
@@ -88,11 +83,9 @@ type ItemDeleteFailedEvent struct {
 
 type CommitTransactionCommand struct {
 	TransactionID string
-	Context       *MessageContext
 }
 type TransactionCommittingEvent struct {
 	TransactionID string
-	Context       *MessageContext
 	Contents      map[string]*CommitItem
 }
 type TransactionCommittedEvent struct {
@@ -113,7 +106,6 @@ type TransactionFailedEvent struct {
 
 type AbortTransactionCommand struct {
 	TransactionID string
-	Context       *MessageContext
 }
 type TransactionAbortedEvent struct {
 	Timestamp     time.Time
