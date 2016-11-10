@@ -1,4 +1,4 @@
-package web
+package handlers
 
 import "github.com/smartystreets/acidic/contracts"
 
