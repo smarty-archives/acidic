@@ -10,12 +10,12 @@ import (
 )
 
 type TransactionAggregate struct {
-	raised messages.MessageContainer
+	raised MessageContainer
 	open   map[string]*Transaction
 	ttl    time.Duration
 }
 
-func NewTransactionAggregate(raised messages.MessageContainer) *TransactionAggregate {
+func NewTransactionAggregate(raised MessageContainer) *TransactionAggregate {
 	return &TransactionAggregate{
 		raised: raised,
 		open:   make(map[string]*Transaction),

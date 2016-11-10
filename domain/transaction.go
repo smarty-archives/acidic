@@ -8,7 +8,7 @@ import (
 )
 
 type Transaction struct {
-	publisher messages.Publisher
+	publisher Publisher
 	status    uint64
 	operation uint64
 	started   time.Time
@@ -16,7 +16,7 @@ type Transaction struct {
 	ttl       time.Duration
 }
 
-func NewTransaction(publisher messages.Publisher, started time.Time, ttl time.Duration) *Transaction {
+func NewTransaction(publisher Publisher, started time.Time, ttl time.Duration) *Transaction {
 	return &Transaction{
 		publisher: publisher,
 		operation: 0,
