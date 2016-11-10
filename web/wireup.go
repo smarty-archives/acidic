@@ -7,6 +7,7 @@ import (
 	"github.com/smartystreets/detour"
 )
 
+// TODO: protect sensitive files, e.g. /tx/... from load/store/delete
 func RegisterRoutes(router httprouter.Router, controller *Controller) {
 	load := detour.New(controller.Load)
 	store := detour.New(controller.Store)

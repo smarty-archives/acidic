@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/smartystreets/acidic/contracts/messages"
 	"github.com/smartystreets/detour"
 )
 
@@ -31,4 +32,12 @@ func (this *LoadInput) Validate() error {
 	errors.AppendIf(missingRequiredKey, len(this.Key) <= len("/"))
 
 	return errors
+}
+
+func (this *LoadInput) ToMessage() messages.LoadItemRequest {
+	return messages.LoadItemRequest{
+		TransactionID: this.TransactionID,
+		Key:           this.Key,
+		ETag:          this.ConditionalETag,
+	}
 }

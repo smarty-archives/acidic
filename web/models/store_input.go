@@ -22,7 +22,7 @@ func (this *StoreInput) Bind(request *http.Request) {
 	this.ConditionalETag = request.Header.Get(IfNoneMatchHeader)
 	this.Key = request.URL.Path
 	this.Metadata = make(map[string]string, len(request.Header)) // TODO: copy all values from keys
-	this.Payload = request.Body                                  // TODO: ensure body is read/closed fully
+	this.Payload = request.Body
 }
 
 func (this *StoreInput) Sanitize() {

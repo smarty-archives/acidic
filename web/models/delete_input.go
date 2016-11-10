@@ -34,9 +34,7 @@ func (this *DeleteInput) Validate() error {
 	return errors
 }
 
-func (this *DeleteInput) ToMessage(stuff interface{}) messages.DeleteItemCommand {
-	// TODO: anything else?
-
+func (this *DeleteInput) ToMessage() messages.DeleteItemCommand {
 	return messages.DeleteItemCommand{
 		TransactionID: this.TransactionID,
 		Key:           this.Key,
