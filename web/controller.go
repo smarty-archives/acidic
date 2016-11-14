@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/smartystreets/acidic/contracts"
-	"github.com/smartystreets/acidic/web/models"
+	"github.com/smartystreets/acidic/contracts/models"
 	"github.com/smartystreets/detour"
 )
 
