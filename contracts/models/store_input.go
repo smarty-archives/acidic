@@ -48,11 +48,6 @@ func (this *StoreInput) Close() error {
 }
 
 func (this *StoreInput) ToMessage() messages.StoreItemCommand {
-	return messages.StoreItemCommand{
-		TransactionID: this.TransactionID,
-		Key:           this.Key,
-		ETag:          this.ConditionalETag,
-		Metadata:      this.Metadata,
-		Payload:       this.Payload,
-	}
+	return messages.NewStoreItemCommand(
+		this.TransactionID, this.Key, this.ConditionalETag, this.Metadata, this.Payload)
 }

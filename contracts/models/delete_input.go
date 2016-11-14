@@ -35,9 +35,5 @@ func (this *DeleteInput) Validate() error {
 }
 
 func (this *DeleteInput) ToMessage() messages.DeleteItemCommand {
-	return messages.DeleteItemCommand{
-		TransactionID: this.TransactionID,
-		Key:           this.Key,
-		ETag:          this.ConditionalETag,
-	}
+	return messages.NewDeleteItemCommand(this.TransactionID, this.Key, this.ConditionalETag)
 }

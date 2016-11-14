@@ -10,7 +10,3 @@ type TransactionAbortedEvent struct {
 	Timestamp     time.Time
 	TransactionID string
 }
-
-func (this TransactionAbortedEvent) CorrelationID() string {
-	return this.TransactionID
-}

@@ -3,37 +3,29 @@ package messages
 import "time"
 
 type DeleteItemCommand struct {
+	correlationID string // required
 	TransactionID string // optional (blank = new tx)
 	Key           string
 	ETag          string // optional
 }
 type DeletingItemEvent struct {
+	correlationID string // required
 	Sequence      uint64
 	TransactionID string
 	Key           string
 	ETag          string // optional
 }
 type ItemDeletedEvent struct {
+	correlationID string // required
 	Timestamp     time.Time
 	Sequence      uint64
 	TransactionID string
 	Key           string
 }
 type ItemDeleteFailedEvent struct {
+	correlationID string // required
 	Timestamp     time.Time
 	Sequence      uint64
 	TransactionID string
 	Key           string
-}
-
-func (this DeleteItemCommand) CorrelationID() string {
-	return "" // TODO
-}
-
-func (this ItemDeletedEvent) CorrelationID() string {
-	return "" // TODO
-}
-
-func (this ItemDeleteFailedEvent) CorrelationID() string {
-	return "" // TODO
 }

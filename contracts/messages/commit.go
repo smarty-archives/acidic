@@ -30,11 +30,3 @@ type CommitWrittenEvent struct {
 	Commit         uint64
 	TransactionIDs []string
 }
-
-func (this CommitTransactionCommand) CorrelationID() string {
-	return this.TransactionID
-}
-
-func (this TransactionCommittedEvent) CorrelationID() string {
-	return this.TransactionID
-}
