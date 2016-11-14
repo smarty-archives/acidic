@@ -8,7 +8,7 @@ import (
 )
 
 type Transaction struct {
-	publisher Publisher
+	aggregate AggregateRoot
 	status    uint64
 	operation uint64
 	started   time.Time
@@ -16,9 +16,9 @@ type Transaction struct {
 	ttl       time.Duration
 }
 
-func NewTransaction(publisher Publisher, started time.Time, ttl time.Duration) *Transaction {
+func NewTransaction(aggregate AggregateRoot, started time.Time, ttl time.Duration) *Transaction {
 	return &Transaction{
-		publisher: publisher,
+		aggregate: aggregate,
 		operation: 0,
 		started:   started,
 		updated:   started,
@@ -93,7 +93,7 @@ func (this *Transaction) handleTransactionCommitFailed(message messages.Transact
 func (this *Transaction) handleAbortTransaction(message messages.AbortTransactionCommand) error {
 	switch this.status {
 	case TransactionStateReady, TransactionStateWriting:
-		this.publisher.Raise(messages.TransactionAbortedEvent{
+		this.aggregate.Raise(messages.TransactionAbortedEvent{
 			Timestamp:     clock.UTCNow(),
 			TransactionID: message.TransactionID,
 		})

@@ -4,6 +4,6 @@ type MessageContainer interface {
 	Add(interface{})
 }
 
-type Publisher interface {
+type AggregateRoot interface {
 	Raise(interface{})
 }
