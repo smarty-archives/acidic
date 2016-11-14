@@ -35,3 +35,15 @@ type ItemStoreFailedEvent struct {
 	TransactionID string
 	Key           string
 }
+
+func (this StoreItemCommand) CorrelationID() string {
+	return "" // TODO
+}
+
+func (this ItemStoredEvent) CorrelationID() string {
+	return "" // TODO
+}
+
+func (this ItemStoreFailedEvent) CorrelationID() string {
+	return "" // TODO
+}

@@ -13,3 +13,7 @@ type TransactionFailedEvent struct {
 	TransactionID string
 	Reason        error
 }
+
+func (this TransactionFailedEvent) CorrelationID() string {
+	return "" // TODO
+}

@@ -25,3 +25,15 @@ type ItemDeleteFailedEvent struct {
 	TransactionID string
 	Key           string
 }
+
+func (this DeleteItemCommand) CorrelationID() string {
+	return "" // TODO
+}
+
+func (this ItemDeletedEvent) CorrelationID() string {
+	return "" // TODO
+}
+
+func (this ItemDeleteFailedEvent) CorrelationID() string {
+	return "" // TODO
+}

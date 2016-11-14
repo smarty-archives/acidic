@@ -17,3 +17,11 @@ type LoadItemResponse struct {
 	Metadata      map[string]string
 	Payload       io.Reader
 }
+
+func (this LoadItemRequest) CorrelationID() string {
+	return "" // TODO
+}
+
+func (this LoadItemResponse) CorrelationID() string {
+	return "" // TODO
+}
