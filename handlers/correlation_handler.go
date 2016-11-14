@@ -1,10 +1,8 @@
 package handlers
 
-import "github.com/smartystreets/acidic/contracts"
-
 type CorrelationHandler struct {
-	application contracts.ApplicationHandler
-	parked      map[string][]contracts.CallingContext
+	application ApplicationHandler
+	parked      map[string][]CallingContext
 }
 
 // NOTE TO SELF FOR TDD:
@@ -17,23 +15,23 @@ type CorrelationHandler struct {
 // To further the example, once a given transaction is in a failed state, additional instructions such as Commit()
 // will return a failure error back to the caller.
 
-func NewCorrelationHandler(application contracts.ApplicationHandler) *CorrelationHandler {
+func NewCorrelationHandler(application ApplicationHandler) *CorrelationHandler {
 	return &CorrelationHandler{
 		application: application,
-		parked:      make(map[string][]contracts.CallingContext),
+		parked:      make(map[string][]CallingContext),
 	}
 }
 
 func (this *CorrelationHandler) Handle(message interface{}) {
 	switch message := message.(type) {
-	case contracts.ContextEnvelope:
+	case ContextEnvelope:
 		this.handleContext(message)
 	default:
 		this.handle(message)
 	}
 }
 
-func (this *CorrelationHandler) handleContext(envelope contracts.ContextEnvelope) {
+func (this *CorrelationHandler) handleContext(envelope ContextEnvelope) {
 	result := this.application.Handle(envelope.Message) // typically command messages which may result in an error
 	correlationID := extractCorrelationID(envelope.Message)
 
@@ -51,7 +49,7 @@ func (this *CorrelationHandler) handle(message interface{}) {
 	}
 }
 
-func (this *CorrelationHandler) park(id string, context contracts.CallingContext) {
+func (this *CorrelationHandler) park(id string, context CallingContext) {
 	items := this.parked[id]
 	items = append(items, context)
 	this.parked[id] = items
@@ -63,13 +61,13 @@ func (this *CorrelationHandler) release(id string, message interface{}) {
 }
 
 func extractCorrelationID(message interface{}) string {
-	if correlated, ok := message.(contracts.CorrelatedMessage); ok {
+	if correlated, ok := message.(CorrelatedMessage); ok {
 		return correlated.CorrelationID()
 	}
 
 	return ""
 }
-func writeResult(context contracts.CallingContext, result interface{}) {
+func writeResult(context CallingContext, result interface{}) {
 	context.Write(result)
 	context.Close()
 }

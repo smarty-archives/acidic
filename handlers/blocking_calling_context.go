@@ -1,13 +1,11 @@
 package handlers
 
-import "github.com/smartystreets/acidic/contracts"
-
 type BlockingCallingContext struct {
 	Result []interface{}
-	Waiter contracts.WaitGroup
+	Waiter WaitGroup
 }
 
-func NewBlockingCallingContext(waiter contracts.WaitGroup) *BlockingCallingContext {
+func NewBlockingCallingContext(waiter WaitGroup) *BlockingCallingContext {
 	waiter.Add(1)
 
 	return &BlockingCallingContext{Waiter: waiter}

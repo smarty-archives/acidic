@@ -1,16 +1,12 @@
 package handlers
 
-import (
-	"sync"
-
-	"github.com/smartystreets/acidic/contracts"
-)
+import "sync"
 
 type BlockingMessageSender struct {
-	output chan<- contracts.ContextEnvelope
+	output chan<- ContextEnvelope
 }
 
-func NewBlockingMessageSender(output chan<- contracts.ContextEnvelope) *BlockingMessageSender {
+func NewBlockingMessageSender(output chan<- ContextEnvelope) *BlockingMessageSender {
 	return &BlockingMessageSender{output: output}
 }
 
@@ -18,7 +14,7 @@ func (this *BlockingMessageSender) Send(message interface{}) interface{} {
 	waiter := &sync.WaitGroup{}
 	context := NewBlockingCallingContext(waiter)
 
-	this.output <- contracts.ContextEnvelope{
+	this.output <- ContextEnvelope{
 		Message: message,
 		Context: context,
 	}
