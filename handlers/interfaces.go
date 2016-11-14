@@ -6,8 +6,7 @@ type WaitGroup interface {
 }
 
 type CallingContext interface {
-	Write(interface{})
-	Close()
+	Complete(interface{})
 }
 
 type ContextEnvelope struct {

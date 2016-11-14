@@ -10,9 +10,9 @@ type CorrelationHandler struct {
 // The intention of this handler is to facilitate "parking" a request while awaiting a future event.
 // A simple example of this might be a CommitTransactionCommand being sent. It takes time for the commit to be durably
 // written to storage. Once we get a TransactionCommittedEvent or TransactionCommitFailed message, we can release
-// this context furthermore, it might be that there are multiple Commit() instructions for a given transaction
-// and a single TransactionCommittedEvent (etc.) can release all parked contexts awaiting that result.
-// To further the example, once a given transaction is in a failed state, additional instructions such as Commit()
+// this context; furthermore, it might be that there are multiple Commit() instructions for a given transaction
+// and a single TransactionCommittedEvent can release all parked contexts awaiting that result.
+// To continue the example, once a given transaction is in a failed state, additional instructions such as Commit()
 // will return a failure error back to the caller.
 
 func NewCorrelationHandler(application ApplicationHandler) *CorrelationHandler {
@@ -30,7 +30,6 @@ func (this *CorrelationHandler) Handle(message interface{}) {
 		this.handle(message)
 	}
 }
-
 func (this *CorrelationHandler) handleContext(envelope ContextEnvelope) {
 	result := this.application.Handle(envelope.Message) // typically command messages which may result in an error
 	correlationID := extractCorrelationID(envelope.Message)
@@ -38,25 +37,24 @@ func (this *CorrelationHandler) handleContext(envelope ContextEnvelope) {
 	if len(correlationID) > 0 && result == nil {
 		this.park(correlationID, envelope.Context)
 	} else {
-		writeResult(envelope.Context, result)
+		envelope.Context.Complete(result)
 	}
 }
 func (this *CorrelationHandler) handle(message interface{}) {
-	this.application.Handle(message) // typically event messages coming in from backend writers (app shouldn't return a result)
+	this.application.Handle(message) // app won't return result when handling event messages coming from backend writer
 
-	if correlationID := extractCorrelationID(message); len(correlationID) > 0 {
-		this.release(correlationID, message)
-	}
+	correlationID := extractCorrelationID(message)
+	this.release(correlationID, message)
 }
 
 func (this *CorrelationHandler) park(id string, context CallingContext) {
-	items := this.parked[id]
-	items = append(items, context)
-	this.parked[id] = items
+	this.parked[id] = append(this.parked[id], context)
 }
 func (this *CorrelationHandler) release(id string, message interface{}) {
-	for _, item := range this.parked[id] {
-		writeResult(item, message)
+	if len(id) > 0 {
+		for _, item := range this.parked[id] {
+			item.Complete(message)
+		}
 	}
 }
 
@@ -66,8 +64,4 @@ func extractCorrelationID(message interface{}) string {
 	}
 
 	return ""
-}
-func writeResult(context CallingContext, result interface{}) {
-	context.Write(result)
-	context.Close()
 }

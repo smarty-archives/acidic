@@ -21,5 +21,5 @@ func (this *BlockingMessageSender) Send(message interface{}) interface{} {
 
 	waiter.Wait()
 
-	return context.Written()
+	return context.Result
 }
