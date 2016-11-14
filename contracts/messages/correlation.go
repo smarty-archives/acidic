@@ -35,13 +35,15 @@ func NewStoreItemCommand(transaction, key, etag string, metadata map[string]stri
 	}
 }
 
-func (this TransactionAbortedEvent) CorrelationID() string   { return this.TransactionID }
-func (this CommitTransactionCommand) CorrelationID() string  { return this.TransactionID }
-func (this DeleteItemCommand) CorrelationID() string         { return this.correlationID }
-func (this ItemDeletedEvent) CorrelationID() string          { return this.correlationID }
-func (this ItemDeleteFailedEvent) CorrelationID() string     { return this.correlationID }
-func (this StoreItemCommand) CorrelationID() string          { return this.correlationID }
-func (this ItemStoredEvent) CorrelationID() string           { return this.correlationID }
+func (this StoreItemCommand) CorrelationID() string         { return this.correlationID }
+func (this CommitTransactionCommand) CorrelationID() string { return this.TransactionID }
+func (this DeleteItemCommand) CorrelationID() string        { return this.correlationID }
+
+func (this TransactionAbortedEvent) CorrelationID() string { return this.TransactionID }
+func (this ItemDeletedEvent) CorrelationID() string        { return this.correlationID }
+func (this ItemStoredEvent) CorrelationID() string         { return this.correlationID }
+
 func (this ItemStoreFailedEvent) CorrelationID() string      { return this.correlationID }
-func (this TransactionFailedEvent) CorrelationID() string    { return this.TransactionID }
+func (this ItemDeleteFailedEvent) CorrelationID() string     { return this.correlationID }
 func (this TransactionCommittedEvent) CorrelationID() string { return this.TransactionID }
+func (this TransactionFailedEvent) CorrelationID() string    { return this.TransactionID }
