@@ -11,10 +11,6 @@ type TransactionAbortedEvent struct {
 	TransactionID string
 }
 
-func (this AbortTransactionCommand) CorrelationID() string {
-	return "" // TODO
-}
-
 func (this TransactionAbortedEvent) CorrelationID() string {
-	return "" // TODO
+	return this.TransactionID
 }

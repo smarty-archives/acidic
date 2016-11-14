@@ -15,5 +15,5 @@ type TransactionFailedEvent struct {
 }
 
 func (this TransactionFailedEvent) CorrelationID() string {
-	return "" // TODO
+	return this.TransactionID
 }

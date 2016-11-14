@@ -32,9 +32,9 @@ type CommitWrittenEvent struct {
 }
 
 func (this CommitTransactionCommand) CorrelationID() string {
-	return "" // TODO
+	return this.TransactionID
 }
 
 func (this TransactionCommittedEvent) CorrelationID() string {
-	return "" // TODO
+	return this.TransactionID
 }
