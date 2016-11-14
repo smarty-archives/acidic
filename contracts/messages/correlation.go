@@ -24,15 +24,6 @@ func NewDeleteItemCommand(transaction, key, etag string) DeleteItemCommand {
 	}
 }
 
-func NewLoadItemRequest(transaction, key, etag string) LoadItemRequest {
-	return LoadItemRequest{
-		correlationID: NextID(),
-		TransactionID: transaction,
-		Key:           key,
-		ETag:          etag,
-	}
-}
-
 func NewStoreItemCommand(transaction, key, etag string, metadata map[string]string, payload io.Reader) StoreItemCommand {
 	return StoreItemCommand{
 		correlationID: NextID(),
@@ -49,8 +40,6 @@ func (this CommitTransactionCommand) CorrelationID() string  { return this.Trans
 func (this DeleteItemCommand) CorrelationID() string         { return this.correlationID }
 func (this ItemDeletedEvent) CorrelationID() string          { return this.correlationID }
 func (this ItemDeleteFailedEvent) CorrelationID() string     { return this.correlationID }
-func (this LoadItemRequest) CorrelationID() string           { return this.correlationID }
-func (this LoadItemResponse) CorrelationID() string          { return this.correlationID }
 func (this StoreItemCommand) CorrelationID() string          { return this.correlationID }
 func (this ItemStoredEvent) CorrelationID() string           { return this.correlationID }
 func (this ItemStoreFailedEvent) CorrelationID() string      { return this.correlationID }

@@ -35,5 +35,9 @@ func (this *LoadInput) Validate() error {
 }
 
 func (this *LoadInput) ToMessage() messages.LoadItemRequest {
-	return messages.NewLoadItemRequest(this.TransactionID, this.Key, this.ConditionalETag)
+	return messages.LoadItemRequest{
+		TransactionID: this.TransactionID,
+		Key:           this.Key,
+		ETag:          this.ConditionalETag,
+	}
 }
