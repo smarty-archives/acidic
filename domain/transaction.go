@@ -1,28 +1,29 @@
 package acidic
 
 import (
+	"time"
+
 	"github.com/smartystreets/acidic/contracts"
 	"github.com/smartystreets/acidic/contracts/messages"
 	"github.com/smartystreets/clock"
-	"time"
 )
 
 type Transaction struct {
-	aggregate AggregateRoot
-	status    uint64
-	operation uint64
-	started   time.Time
-	updated   time.Time
-	ttl       time.Duration
+	dispatcher Dispatcher
+	status     uint64
+	operation  uint64
+	started    time.Time
+	updated    time.Time
+	ttl        time.Duration
 }
 
-func NewTransaction(aggregate AggregateRoot, started time.Time, ttl time.Duration) *Transaction {
+func NewTransaction(dispatcher Dispatcher, started time.Time, ttl time.Duration) *Transaction {
 	return &Transaction{
-		aggregate: aggregate,
-		operation: 0,
-		started:   started,
-		updated:   started,
-		ttl:       ttl,
+		dispatcher: dispatcher,
+		operation:  0,
+		started:    started,
+		updated:    started,
+		ttl:        ttl,
 	}
 }
 
@@ -93,7 +94,7 @@ func (this *Transaction) handleTransactionCommitFailed(message messages.Transact
 func (this *Transaction) handleAbortTransaction(message messages.AbortTransactionCommand) error {
 	switch this.status {
 	case TransactionStateReady, TransactionStateWriting:
-		this.aggregate.Raise(messages.TransactionAbortedEvent{
+		this.dispatcher.Raise(messages.TransactionAbortedEvent{
 			Timestamp:     clock.UTCNow(),
 			TransactionID: message.TransactionID,
 		})

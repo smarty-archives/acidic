@@ -1,8 +1,9 @@
 package acidic
 
 import (
-	"github.com/smartystreets/acidic/contracts/messages"
 	"time"
+
+	"github.com/smartystreets/acidic/contracts/messages"
 )
 
 type KeyMapProjection struct {

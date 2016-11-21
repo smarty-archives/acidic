@@ -4,6 +4,6 @@ type MessageContainer interface {
 	Add(interface{})
 }
 
-type AggregateRoot interface {
+type Dispatcher interface {
 	Raise(interface{})
 }
