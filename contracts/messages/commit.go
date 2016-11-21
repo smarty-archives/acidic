@@ -5,7 +5,12 @@ import "time"
 type CommitTransactionCommand struct {
 	TransactionID string
 }
+type TransactionPendingCommitEvent struct {
+	Timestamp     time.Time
+	TransactionID string
+}
 type TransactionCommittingEvent struct {
+	Timestamp     time.Time
 	TransactionID string
 	Contents      map[string]*CommitItem
 }

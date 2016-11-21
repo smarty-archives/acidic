@@ -10,6 +10,7 @@ type DeleteItemCommand struct {
 }
 type DeletingItemEvent struct {
 	correlationID string // required
+	Timestamp     time.Time
 	Sequence      uint64
 	TransactionID string
 	Key           string

@@ -15,6 +15,7 @@ type StoreItemCommand struct {
 }
 type StoringItemEvent struct {
 	correlationID string // required
+	Timestamp     time.Time
 	Sequence      uint64 // incremented for each mutating operation; this helps us to know which Store was the most recent one
 	TransactionID string
 	Key           string

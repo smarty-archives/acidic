@@ -3,48 +3,41 @@ package acidic
 import (
 	"time"
 
-	"github.com/smartystreets/acidic/contracts"
 	"github.com/smartystreets/acidic/contracts/messages"
-	"github.com/smartystreets/clock"
 )
 
 type Transaction struct {
-	dispatcher Dispatcher
-	status     uint64
-	operation  uint64
-	started    time.Time
-	updated    time.Time
-	ttl        time.Duration
+	raised    Dispatcher
+	id        string
+	status    uint64
+	operation uint64
+	started   time.Time
+	updated   time.Time
+	ttl       time.Duration
 }
 
-func NewTransaction(dispatcher Dispatcher, started time.Time, ttl time.Duration) *Transaction {
+func NewTransaction(raised Dispatcher, id string, started time.Time, ttl time.Duration) *Transaction {
 	return &Transaction{
-		dispatcher: dispatcher,
-		operation:  0,
-		started:    started,
-		updated:    started,
-		ttl:        ttl,
+		raised:    raised,
+		id:        id,
+		operation: 0,
+		started:   started,
+		updated:   started,
+		ttl:       ttl,
 	}
 }
 
 func (this *Transaction) Handle(message interface{}) error {
-	// TODO: if timed out, return TimeoutError and raise TransactionFailedEvent
-
 	switch message := message.(type) {
 
 	case messages.StoreItemCommand:
 		return this.handleStoreItem(message)
-	case messages.ItemStoredEvent:
-		return this.handleItemStored(message)
-	case messages.ItemStoreFailedEvent:
-		return this.handleItemStoreFailed(message)
-
 	case messages.DeleteItemCommand:
 		return this.handleDeleteItem(message)
-	case messages.ItemDeletedEvent:
-		return this.handleItemDeleted(message)
-	case messages.ItemDeleteFailedEvent:
-		return this.handleItemDeleteFailed(message)
+	case messages.ItemStoredEvent, messages.ItemDeletedEvent:
+		return this.handleWriteCompleted(message)
+	case messages.ItemStoreFailedEvent, messages.ItemDeleteFailedEvent:
+		return this.handleWriteFailed(message)
 
 	case messages.CommitTransactionCommand:
 		return this.handleCommitTransaction(message)
@@ -62,47 +55,62 @@ func (this *Transaction) Handle(message interface{}) error {
 }
 
 func (this *Transaction) handleStoreItem(message messages.StoreItemCommand) error {
+	// if !(ready||writing), return error
+	// if timed out, raise TransactionFailed and return timeout error
+	// concurrency: check outstanding map for possible failures, if so, return concurrency error
+	// concurrency: if etags match, return an error that releases the context but is a success, eg. AlreadyWrittenError
+	// raise StoringItemEvent
 	return nil
 }
-func (this *Transaction) handleItemStored(message messages.ItemStoredEvent) error {
-	return nil
-}
-func (this *Transaction) handleItemStoreFailed(message messages.ItemStoreFailedEvent) error {
-	return nil
-}
-
 func (this *Transaction) handleDeleteItem(message messages.DeleteItemCommand) error {
+	// if (!ready|writing), return error
+	// if timed out, raise TransactionFailed and return timeout error
+	// concurrency: check outstanding map for possible concurrency issues; if so, return concurrency error
+	// concurrency: if etags match, return an error that releases the context but is a success, eg. AlreadyWrittenError
+	// raise DeletingItemEvent
 	return nil
 }
-func (this *Transaction) handleItemDeleted(message messages.ItemDeletedEvent) error {
+func (this *Transaction) handleWriteCompleted(message interface{}) error {
+	// if (aborted|failed), return
+	// if tx timed out, raise TransactionFailed+reason=TransactionTimeoutError
+	// apply message
+	// if state == txWritingCommitting and > 1 outstanding writes, done
+	// raise TransactionCommittingEvent
 	return nil
 }
-func (this *Transaction) handleItemDeleteFailed(message messages.ItemDeleteFailedEvent) error {
+func (this *Transaction) handleWriteFailed(message interface{}) error {
+	// if (aborted|failed), return
+	// raise TransactionFailed+reason=WriteError
 	return nil
 }
 
 func (this *Transaction) handleCommitTransaction(message messages.CommitTransactionCommand) error {
+	// if (txAborted|txFailed), return error
+	// if (txWritingCommitting, txCommitting), return nil
+	// if txCommitted, return AlreadyCommittedError (which is a HTTP 200/no-op) to the caller
+	// if timed out, raise TransactionFailed and return timeout error
+
+	// if state=txWriting, raise TransactionPendingCommitEvent (which transitions to txWritingCommitting)
+	// if state=txReady, raise TransactionCommittingEvent
 	return nil
 }
 func (this *Transaction) handleTransactionCommitted(message messages.TransactionCommittedEvent) error {
+	this.Apply(message)
 	return nil
 }
 func (this *Transaction) handleTransactionCommitFailed(message messages.TransactionCommitFailedEvent) error {
+	// if (txAborted|txFailed), return
+	// raise TransactionFailed
 	return nil
 }
 
 func (this *Transaction) handleAbortTransaction(message messages.AbortTransactionCommand) error {
-	switch this.status {
-	case TransactionStateReady, TransactionStateWriting:
-		this.dispatcher.Raise(messages.TransactionAbortedEvent{
-			Timestamp:     clock.UTCNow(),
-			TransactionID: message.TransactionID,
-		})
-
-		return nil
-	default:
-		return contracts.InvalidTransitionError
-	}
+	// if (txAborted), return nil
+	// if (txFailed), return TransactionFailedError
+	// if (txCommitted), return AlreadyCommittedError
+	// if (txCommitting|txWritingCommitting), return InvalidTransitionError
+	// raise TransactionAbortedEvent
+	return nil
 }
 
 func (this *Transaction) Apply(message interface{}) {
@@ -128,35 +136,25 @@ func (this *Transaction) Apply(message interface{}) {
 }
 
 func (this *Transaction) applyStoringItem(message messages.StoringItemEvent) {
+	this.updated = message.Timestamp
 }
 func (this *Transaction) applyItemStored(message messages.ItemStoredEvent) {
+	this.updated = message.Timestamp
 }
 func (this *Transaction) applyItemStoreFailed(message messages.ItemStoreFailedEvent) {
+	this.updated = message.Timestamp
 }
 
 func (this *Transaction) applyDeletingItem(message messages.DeletingItemEvent) {
+	this.updated = message.Timestamp
 }
 func (this *Transaction) applyItemDeleted(message messages.ItemDeletedEvent) {
+	this.updated = message.Timestamp
 }
 func (this *Transaction) applyItemDeleteFailed(message messages.ItemDeleteFailedEvent) {
+	this.updated = message.Timestamp
 }
 
 func (this *Transaction) applyTransactionCommitting(message messages.TransactionCommittingEvent) {
-	if this.status == TransactionStateReady {
-		this.status = TransactionStateCommitting
-	} else {
-		this.status = TransactionStateWritingCommitting
-	}
-
-	// park any contexts needed to respond to
+	this.updated = message.Timestamp
 }
-
-const (
-	TransactionStateReady = iota
-	TransactionStateWriting
-	TransactionStateWritingCommitting
-	TransactionStateCommitting
-	// TransactionStateCommitted
-	// TransactionStateAborted
-	// TransactionStateFailed
-)

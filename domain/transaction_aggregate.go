@@ -103,7 +103,7 @@ func (this *TransactionAggregate) apply(message interface{}) {
 }
 
 func (this *TransactionAggregate) applyTransactionStarted(message messages.TransactionStartedEvent) {
-	this.open[message.TransactionID] = NewTransaction(this, message.Timestamp, message.TTL)
+	this.open[message.TransactionID] = NewTransaction(this, message.TransactionID, message.Timestamp, message.TTL)
 }
 func (this *TransactionAggregate) tryApply(transactionID string, message interface{}) {
 	if transaction, contains := this.open[transactionID]; contains {
