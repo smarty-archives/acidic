@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/smartystreets/acidic/contracts/messages"
+	"log"
+	"reflect"
 )
 
 type Transaction struct {
@@ -50,6 +52,7 @@ func (this *Transaction) Handle(message interface{}) error {
 		return this.handleAbortTransaction(message)
 
 	default:
+		log.Panicf("Unknown message type: %s", reflect.TypeOf(message).Name())
 		return nil
 	}
 }
@@ -130,8 +133,13 @@ func (this *Transaction) Apply(message interface{}) {
 	case messages.ItemDeleteFailedEvent:
 		this.applyItemDeleteFailed(message)
 
+	case messages.TransactionPendingCommitEvent:
+		this.applyTransactionPendingCommit(message)
 	case messages.TransactionCommittingEvent:
 		this.applyTransactionCommitting(message)
+
+	default:
+		log.Panicf("Unknown message type: %s", reflect.TypeOf(message).Name())
 	}
 }
 
@@ -155,6 +163,9 @@ func (this *Transaction) applyItemDeleteFailed(message messages.ItemDeleteFailed
 	this.updated = message.Timestamp
 }
 
+func (this *Transaction) applyTransactionPendingCommit(message messages.TransactionPendingCommitEvent) {
+	this.updated = message.Timestamp
+}
 func (this *Transaction) applyTransactionCommitting(message messages.TransactionCommittingEvent) {
 	this.updated = message.Timestamp
 }
