@@ -15,11 +15,11 @@ type TransactionAggregate struct {
 	ttl    time.Duration
 }
 
-func NewTransactionAggregate(raised MessageContainer) *TransactionAggregate {
+func NewTransactionAggregate(raised MessageContainer, ttl time.Duration) *TransactionAggregate {
 	return &TransactionAggregate{
 		raised: raised,
-		open:   make(map[string]*Transaction),
-		ttl:    time.Minute * 5,
+		open:   make(map[string]*Transaction, 32),
+		ttl:    ttl,
 	}
 }
 
@@ -43,6 +43,7 @@ func (this *TransactionAggregate) Handle(message interface{}) error {
 		return this.tryHandle(message.TransactionID, message)
 
 	case messages.CommitTransactionCommand:
+		// TODO: consider keys that are committing/committed in other transactions which might conflict here
 		return this.tryHandle(message.TransactionID, message)
 	case messages.TransactionCommittedEvent:
 		return this.tryHandle(message.TransactionID, message)
@@ -89,8 +90,6 @@ func (this *TransactionAggregate) apply(message interface{}) {
 		this.tryApply(message.TransactionID, message)
 
 	case messages.TransactionCommittingEvent:
-		// TODO: consider keys that are committing/committed in other transactions which might conflict here
-		// TODO: maybe we take a dependency on the KeyMapProjection here???
 		this.tryApply(message.TransactionID, message)
 	case messages.TransactionCommittedEvent:
 		this.removeTransaction(message.TransactionID)
