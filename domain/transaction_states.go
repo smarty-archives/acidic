@@ -3,7 +3,7 @@ package acidic
 const (
 	txReady = iota
 	txWriting
-	txWritingCommitting
+	txCommittingAwaitingWrites
 	txCommitting
 	txCommitted
 	txAborted

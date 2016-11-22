@@ -58,6 +58,11 @@ func (this *Transaction) Handle(message interface{}) error {
 }
 
 func (this *Transaction) handleStoreItem(message messages.StoreItemCommand) error {
+	if this.status == txAborted || this.status == txFailed || this.status == txCommitted {
+		log.Panicf("Invalid state")
+	}
+	//if this.status != txReady && this.status == this
+
 	// if !(ready||writing), return error
 	// if timed out, raise TransactionFailed and return timeout error
 	// concurrency: check outstanding map for possible failures, if so, return concurrency error
@@ -133,8 +138,8 @@ func (this *Transaction) Apply(message interface{}) {
 	case messages.ItemDeleteFailedEvent:
 		this.applyItemDeleteFailed(message)
 
-	case messages.TransactionPendingCommitEvent:
-		this.applyTransactionPendingCommit(message)
+	case messages.TransactionCommitAwaitingWritesEvent:
+		this.applyTransactionAwaitingWrites(message)
 	case messages.TransactionCommittingEvent:
 		this.applyTransactionCommitting(message)
 
@@ -145,6 +150,7 @@ func (this *Transaction) Apply(message interface{}) {
 
 func (this *Transaction) applyStoringItem(message messages.StoringItemEvent) {
 	this.updated = message.Timestamp
+
 }
 func (this *Transaction) applyItemStored(message messages.ItemStoredEvent) {
 	this.updated = message.Timestamp
@@ -163,8 +169,9 @@ func (this *Transaction) applyItemDeleteFailed(message messages.ItemDeleteFailed
 	this.updated = message.Timestamp
 }
 
-func (this *Transaction) applyTransactionPendingCommit(message messages.TransactionPendingCommitEvent) {
+func (this *Transaction) applyTransactionAwaitingWrites(message messages.TransactionCommitAwaitingWritesEvent) {
 	this.updated = message.Timestamp
+	this.status = txCommittingAwaitingWrites
 }
 func (this *Transaction) applyTransactionCommitting(message messages.TransactionCommittingEvent) {
 	this.updated = message.Timestamp

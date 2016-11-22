@@ -89,7 +89,7 @@ func (this *TransactionAggregate) apply(message interface{}) {
 	case messages.ItemDeleteFailedEvent:
 		this.tryApply(message.TransactionID, message)
 
-	case messages.TransactionPendingCommitEvent:
+	case messages.TransactionCommitAwaitingWritesEvent:
 		this.tryApply(message.TransactionID, message)
 	case messages.TransactionCommittingEvent:
 		this.tryApply(message.TransactionID, message)

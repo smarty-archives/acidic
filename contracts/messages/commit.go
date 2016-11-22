@@ -5,7 +5,7 @@ import "time"
 type CommitTransactionCommand struct {
 	TransactionID string
 }
-type TransactionPendingCommitEvent struct {
+type TransactionCommitAwaitingWritesEvent struct {
 	Timestamp     time.Time
 	TransactionID string
 }
