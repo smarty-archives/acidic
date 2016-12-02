@@ -150,23 +150,30 @@ func (this *Transaction) Apply(message interface{}) {
 
 func (this *Transaction) applyStoringItem(message messages.StoringItemEvent) {
 	this.updated = message.Timestamp
-
+	if this.status != txCommittingAwaitingWrites {
+		this.status = txWriting
+	}
 }
 func (this *Transaction) applyItemStored(message messages.ItemStoredEvent) {
 	this.updated = message.Timestamp
 }
 func (this *Transaction) applyItemStoreFailed(message messages.ItemStoreFailedEvent) {
 	this.updated = message.Timestamp
+	this.status = txFailed
 }
 
 func (this *Transaction) applyDeletingItem(message messages.DeletingItemEvent) {
 	this.updated = message.Timestamp
+	if this.status != txCommittingAwaitingWrites {
+		this.status = txWriting
+	}
 }
 func (this *Transaction) applyItemDeleted(message messages.ItemDeletedEvent) {
 	this.updated = message.Timestamp
 }
 func (this *Transaction) applyItemDeleteFailed(message messages.ItemDeleteFailedEvent) {
 	this.updated = message.Timestamp
+	this.status = txFailed
 }
 
 func (this *Transaction) applyTransactionAwaitingWrites(message messages.TransactionCommitAwaitingWritesEvent) {
@@ -175,4 +182,5 @@ func (this *Transaction) applyTransactionAwaitingWrites(message messages.Transac
 }
 func (this *Transaction) applyTransactionCommitting(message messages.TransactionCommittingEvent) {
 	this.updated = message.Timestamp
+	this.status = txCommitting
 }
