@@ -1,0 +1,12 @@
+github.com/julienschmidt/httprouter v1.2.0 h1:TDTW5Yz1mjftljbcKqRcrYhd4XeOoI98t+9HbQbYf7g=
+github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
+github.com/smartystreets/assertions v1.0.0 h1:UVQPSSmc3qtTi+zPPkCXvZX9VvW/xT/NsRvKfwY81a8=
+github.com/smartystreets/assertions v1.0.0/go.mod h1:kHHU4qYBaI3q23Pp3VPrmWhuIUrLW/7eUrw0BU5VaoM=
+github.com/smartystreets/clock v1.0.0 h1:A59pCOKbYR1CtviZ/kyekUitqlxLgZq63LVWr2mlB9E=
+github.com/smartystreets/clock v1.0.0/go.mod h1:ACKkhDG9XxjiyOpKTsQ0zlocCq2Dbu2/zWL4raAdeLI=
+github.com/smartystreets/detour v1.0.0 h1:gFOBn61TW2IHWyH8QWmGp1hd+y+ZkIqu9U2H/VDMqTw=
+github.com/smartystreets/detour v1.0.0/go.mod h1:uJkT4oUoHLNJdkPfAogr6XjZ4SrEJ5XaVvFhB/G0dQw=
+github.com/smartystreets/gunit v1.0.0 h1:RyPDUFcJbvtXlhJPk7v+wnxZRY2EUokhEYl2EJOPToI=
+github.com/smartystreets/gunit v1.0.0/go.mod h1:qwPWnhz6pn0NnRBP++URONOVyNkPyr4SauJk4cUOwJs=
+github.com/smartystreets/random v1.0.0 h1:jzU19LT1sIJPJ5nOzs0UY9GD/IteMq1HOlWmd8QxHqA=
+github.com/smartystreets/random v1.0.0/go.mod h1:TtdPXH0bmd18e1LBJAjaFEC7PPt6qnbu5efQOu5Tsks=
